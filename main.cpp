@@ -1,6 +1,6 @@
-#include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 
@@ -149,7 +149,6 @@ public:
         cout << "Error when using [] (element index is not correct)!" << endl;
         buf = type();
         return buf;
-
     }
 
     type operator[](int n) const
