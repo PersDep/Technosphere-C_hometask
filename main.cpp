@@ -16,26 +16,19 @@ private:
     type *array, buf;
 
 public:
-    void swap(Set &set) throw()
-    {
-        std::swap(size, set.size);
-        std::swap(cur_pos, set.cur_pos);
-        std::swap(existance, set.existance);
-        std::swap(array, set.array);
-    }
+    template <typename T>
+    friend void my_swap(Set<T> &set1, Set<T> &set2) throw();
 
     Set(int size = 0) : existance(true), size(size), cur_pos(0)
     {
         array = nullptr;
-        if (!(array = new type[size]))
-            throw std::bad_alloc();
+        array = new type[size];
     }
 
     Set(vector<type> values) : existance(true), size(values.size()), cur_pos(0)
     {
         array = nullptr;
-        if (!(array = new type[size]))
-            throw std::bad_alloc();
+        array = new type[size];
 
         for (auto &i : values)
             this->insert(i);
@@ -47,8 +40,7 @@ public:
         {
             size = set.size, cur_pos = set.cur_pos, existance = true;
             array = nullptr;
-            if (!(array = new type[size]))
-                throw std::bad_alloc();
+            array = new type[size];
             memcpy(array, set.array, size * sizeof(type));
         }
         else
@@ -68,18 +60,14 @@ public:
 
     ~Set()
     {
-        if (array)
-        {
-            delete[] array;
-            array = nullptr;
-            size = 0, cur_pos = 0;
-        }
-        existance = false;
+        delete[] array;
+        array = nullptr;
+        size = 0, cur_pos = 0, existance = false;
     }
 
     Set &operator=(Set set)
     {
-        swap(set);
+        my_swap(*this, set);
         return *this;
     }
 
@@ -168,21 +156,20 @@ public:
         {
             if (cur_pos < size)
             {
-                array[cur_pos++] = elem;
+                array[cur_pos++] = std::move(elem);
                 return true;
             }
             else if (cur_pos == size)
             {
                 type *temp = nullptr;
-                if (!(temp = new type[size + EXPANSION]))
-                    throw std::bad_alloc();
+                temp = new type[size + EXPANSION];
                 if (array)
                 {
                     memcpy(temp, array, size * sizeof(type));
                     delete[] array;
                 }
                 array = temp;
-                array[cur_pos++] = elem;
+                array[cur_pos++] = std::move(elem);
                 size += EXPANSION;
                 return true;
             }
@@ -199,8 +186,7 @@ public:
             if (new_size)
             {
                 type *temp = nullptr;
-                if (!(temp = new type[new_size]))
-                    throw std::bad_alloc();
+                temp = new type[new_size];
                 if (new_size > size)
                     memcpy(temp, array, size * sizeof(type));
                 else
@@ -236,6 +222,15 @@ public:
         }
     }
 };
+
+template <typename type>
+void my_swap(Set<type> &set1, Set<type> &set2) throw()
+{
+    std::swap(set1.size, set2.size);
+    std::swap(set1.cur_pos, set2.cur_pos);
+    std::swap(set1.existance, set2.existance);
+    std::swap(set1.array, set2.array);
+}
 
 int main(int argc, const char **argv)
 {
