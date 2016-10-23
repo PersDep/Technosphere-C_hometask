@@ -31,6 +31,16 @@ public:
             throw std::bad_alloc();
     }
 
+    Set(vector<type> values) : existance(true), size(values.size()), cur_pos(0)
+    {
+        array = nullptr;
+        if (!(array = new type[size]))
+            throw std::bad_alloc();
+
+        for (auto &i : values)
+            this->insert(i);
+    }
+
     Set(const Set &set)
     {
         if (set.existance)
@@ -317,7 +327,33 @@ int main(int argc, const char **argv)
         nullSet.print();
         nullSet = emptySet;
         nullSet.print();
-        cout << "test end" << endl;
+    }
+
+    if (argc > 2 && string(argv[1]) == "test")
+    {
+        vector<int> values1, values2;
+        int size, value;
+
+        sscanf(argv[2], "%d", &size);
+        for (int i = 0; i < size; i++)
+            sscanf(argv[i + 3], "%d", &value), values1.push_back(value);
+        Set<int> work_set1(values1);
+        work_set1.print();
+
+        sscanf(argv[values1.size() + 4], "%d", &size);
+        for (int i = 0; i < size; i++)
+            sscanf(argv[i + values1.size() + 5], "%d", &value), values2.push_back(value);
+        Set<int> work_set2(values2);
+        work_set2.print();
+
+        Set<int> resSet;
+        if (argv[values1.size() + 3][0] == '*')
+            resSet = work_set1 * work_set2;
+        if (argv[values1.size() + 3][0] == '+')
+            resSet = work_set1 + work_set2;
+        if (argv[values1.size() + 3][0] == '-')
+            resSet = work_set1 - work_set2;
+        resSet.print();
     }
 
     getchar();
