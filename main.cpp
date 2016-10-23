@@ -150,7 +150,7 @@ public:
         }
     }
 
-    bool insert(type elem)
+    bool insert(const type &elem)
     {
         if (existance)
         {
