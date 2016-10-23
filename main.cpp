@@ -164,7 +164,9 @@ public:
             }
             else if (cur_pos == size)
             {
-                type *temp = new type[size + EXP];
+                type *temp = nullptr;
+                if (!(temp = new type[size + EXP]))
+                    throw std::bad_alloc();
                 if (array)
                 {
                     memcpy(temp, array, size * sizeof(type));
