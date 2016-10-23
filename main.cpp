@@ -13,11 +13,11 @@ private:
     const int EXPANSION = 10;
     bool existance;
     int size, cur_pos;
-    type *array, buf;
+    type *array;
 
 public:
     template <typename T>
-    friend void my_swap(Set<T> &set1, Set<T> &set2) throw();
+    friend void swap(Set<T> &set1, Set<T> &set2) throw();
 
     Set(int size = 0) : existance(true), size(size), cur_pos(0)
     {
@@ -67,7 +67,7 @@ public:
 
     Set &operator=(Set set)
     {
-        my_swap(*this, set);
+        swap(*this, set);
         return *this;
     }
 
@@ -121,33 +121,23 @@ public:
     {
         if (0 <= n && n < size)
         {
-            if (n < cur_pos)
-                return array[n];
-            else if (n == cur_pos)
-            {
+            if (n == cur_pos)
                 cur_pos++;
-                return array[n];
-            }
             else if (n > cur_pos)
-            {
                 cout << "Warning: this element is out of actual range and might be rewrited or ignored later." << endl;
-                return array[n];
-            }
         }
-        cout << "Error when using [] (element index is not correct)!" << endl;
-        buf = type();
-        return buf;
+        else
+            throw std::invalid_argument("Error when using [] (element index is not correct)!");
+
+        return array[n];
     }
 
     type operator[](int n) const
     {
-        if (0 <= n && n < size)
-            return array[n];
-        else
-        {
-            cout << "Error when using [] (element index is not correct)!" << endl;
-            return type();
-        }
+        if (0 > n || n >= size)
+            throw std::invalid_argument("Error when using [] (element index is not correct)!");
+
+        return array[n];
     }
 
     bool insert(const type &elem)
@@ -224,7 +214,7 @@ public:
 };
 
 template <typename type>
-void my_swap(Set<type> &set1, Set<type> &set2) throw()
+void swap(Set<type> &set1, Set<type> &set2) throw()
 {
     std::swap(set1.size, set2.size);
     std::swap(set1.cur_pos, set2.cur_pos);
