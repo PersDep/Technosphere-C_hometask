@@ -10,7 +10,7 @@ template <typename type>
 class Set
 {
 private:
-    const int EXP = 10;
+    const int EXPANSION = 10;
     bool existance;
     int size, cur_pos;
     type *array, buf;
@@ -165,7 +165,7 @@ public:
             else if (cur_pos == size)
             {
                 type *temp = nullptr;
-                if (!(temp = new type[size + EXP]))
+                if (!(temp = new type[size + EXPANSION]))
                     throw std::bad_alloc();
                 if (array)
                 {
@@ -174,7 +174,7 @@ public:
                 }
                 array = temp;
                 array[cur_pos++] = elem;
-                size += EXP;
+                size += EXPANSION;
                 return true;
             }
         }
