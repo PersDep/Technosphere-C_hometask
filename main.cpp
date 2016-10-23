@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <stdexcept>
 #include <vector>
 
 using namespace std;
@@ -10,6 +11,7 @@ class Set
 {
 private:
     const int EXP = 10;
+    bool existance;
     int size, cur_pos;
     type *array, buf;
 
@@ -18,51 +20,40 @@ public:
     {
         std::swap(size, set.size);
         std::swap(cur_pos, set.cur_pos);
+        std::swap(existance, set.existance);
         std::swap(array, set.array);
     }
 
-    Set(int size = 0) : size(size), cur_pos(0)
+    Set(int size = 0) : existance(true), size(size), cur_pos(0)
     {
-        if (size > 0)
-            array = new type[size];
-        else if (!size)
-            array = nullptr;
-        else if (size < 0)
-        {
-            cout << "Error trying to create a Set with negative amount of elements!" << endl;
-            array = nullptr;
-        }
+        array = nullptr;
+        if (!(array = new type[size]))
+            throw std::bad_alloc();
     }
 
     Set(const Set &set)
     {
-        if (set.array)
+        if (set.existance)
         {
-            size = set.size, cur_pos = set.cur_pos;
-            array = new type[size];
+            size = set.size, cur_pos = set.cur_pos, existance = true;
+            array = nullptr;
+            if (!(array = new type[size]))
+                throw std::bad_alloc();
             memcpy(array, set.array, size * sizeof(type));
         }
         else
         {
-            size = 0, cur_pos = 0;
+            size = 0, cur_pos = 0, existance = false;
             array = nullptr;
         }
     }
 
     Set(Set &&set)
     {
-        if (set.array)
-        {
-            size = set.size, cur_pos = set.cur_pos;
-            array = set.array;
-            set.size = 0, set.cur_pos = 0;
-            set.array = nullptr;
-        }
-        else
-        {
-            size = 0, cur_pos = 0;
-            array = nullptr;
-        }
+        size = set.size, cur_pos = set.cur_pos, existance = set.existance;
+        array = set.array;
+        set.size = 0, set.cur_pos = 0, set.existance = false;
+        set.array = nullptr;
     }
 
     ~Set()
@@ -73,29 +64,8 @@ public:
             array = nullptr;
             size = 0, cur_pos = 0;
         }
+        existance = false;
     }
-
-    /*Set &operator=(const Set &set)
-    {
-        if (this != &set)
-        {
-            if (set.array)
-            {
-                size = set.size, cur_pos = set.cur_pos;
-                type *temp = new type[size];
-                memcpy(temp, set.array, size * sizeof(type));
-                if (array)
-                    delete[] array;
-                array = temp;
-            }
-            else
-            {
-                size = 0, cur_pos = 0;
-                array = nullptr;
-            }
-        }
-        return *this;
-    }*/
 
     Set &operator=(Set set)
     {
@@ -185,65 +155,74 @@ public:
 
     bool insert(type elem)
     {
-        if (cur_pos < size)
+        if (existance)
         {
-            array[cur_pos++] = elem;
-            return true;
-        }
-        else if (cur_pos == size)
-        {
-            type *temp = new type[size + EXP];
-            if (array)
+            if (cur_pos < size)
             {
-                memcpy(temp, array, size * sizeof(type));
-                delete[] array;
+                array[cur_pos++] = elem;
+                return true;
             }
-            array = temp;
-            array[cur_pos++] = elem;
-            size += EXP;
-            return true;
+            else if (cur_pos == size)
+            {
+                type *temp = new type[size + EXP];
+                if (array)
+                {
+                    memcpy(temp, array, size * sizeof(type));
+                    delete[] array;
+                }
+                array = temp;
+                array[cur_pos++] = elem;
+                size += EXP;
+                return true;
+            }
         }
         return false;
     }
 
     void resize(int new_size)
     {
-        if (new_size == size)
-            return;
-        if (new_size > 0)
+        if (existance)
         {
-            type *temp = new type[new_size];
-            if (new_size > size)
-                memcpy(temp, array, size * sizeof(type));
+            if (new_size == size)
+                return;
+            if (new_size)
+            {
+                type *temp = nullptr;
+                if (!(temp = new type[new_size]))
+                    throw std::bad_alloc();
+                if (new_size > size)
+                    memcpy(temp, array, size * sizeof(type));
+                else
+                {
+                    memcpy(temp, array, new_size * sizeof(type));
+                    if (cur_pos > new_size)
+                        cur_pos = new_size;
+                }
+                if (array)
+                    delete[] array;
+                array = temp;
+                size = new_size;
+            }
             else
             {
-                memcpy(temp, array, new_size * sizeof(type));
-                if (cur_pos > new_size)
-                    cur_pos = new_size;
-            }
-            if (array)
-                delete[] array;
-            array = temp;
-            size = new_size;
-        }
-        else if (!new_size)
-        {
-            if (array)
-            {
-                delete[] array;
-                array = nullptr;
-                size = 0, cur_pos = 0;
+                if (array)
+                {
+                    delete[] array;
+                    array = nullptr;
+                    size = 0, cur_pos = 0;
+                }
             }
         }
-        else if (new_size < 0)
-            cout << "Error trying to make a Set size negative value! Set will remain the same." << endl;
     }
 
     void print() const
     {
-        for (int i = 0; i < cur_pos; i++)
-            cout << array[i] << ' ';
-        cout << endl;
+        if (existance)
+        {
+            for (int i = 0; i < cur_pos; i++)
+                cout << array[i] << ' ';
+            cout << endl;
+        }
     }
 };
 
@@ -330,6 +309,12 @@ int main(int argc, const char **argv)
         emptySet.print();
         emptySet.resize(0);
         emptySet.~Set();
+
+        Set<int> nullSet(0);
+        nullSet.insert(11);
+        nullSet.print();
+        nullSet = emptySet;
+        nullSet.print();
     }
 
     getchar();
