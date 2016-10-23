@@ -317,6 +317,7 @@ int main(int argc, const char **argv)
         nullSet.print();
         nullSet = emptySet;
         nullSet.print();
+        cout << "test end" << endl;
     }
 
     getchar();
