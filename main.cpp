@@ -247,87 +247,91 @@ public:
     }
 };
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
-    Set<double> mySet;
-    cout << mySet.getSize() << endl;
-    mySet.insert(10);
-    mySet.insert(100500);
-    mySet.print();
-    cout << mySet.getSize() << endl;
-    Set<double> newSet(mySet);
-    mySet.~Set();
-    cout << mySet.getSize() << endl;
-    cout << newSet.getSize() << endl;
-    newSet.insert(30);
-    newSet.insert(100501);
-    newSet.insert(30);
-    newSet.insert(100501);
-    newSet.insert(30);
-    newSet.insert(100501);
-    newSet.insert(30);
-    newSet.insert(100501);
-    newSet.insert(30);
-    newSet.insert(100501);
-    newSet.print();
-    cout << newSet.getSize() << endl;
-    newSet.resize(100);
-    cout << newSet.getSize() << endl;
-    newSet.insert(10);
-    newSet.insert(100501);
-    newSet.insert(40);
-    newSet.insert(20501);
-    newSet.insert(40);
-    newSet.insert(200501);
-    newSet.insert(40);
-    newSet.insert(200501);
-    newSet.insert(30);
-    newSet.insert(200501);
-    newSet.print();
-    cout << newSet.getSize() << endl;
-    Set<double> crossSet(newSet);
-    crossSet.print();
-    newSet[10] = -1000;
-    newSet.print();
-    cout << newSet.getActualSize() << endl;
-    newSet[22] = 7;
-    cout << '!' << newSet[22] << endl;
-    newSet.insert(18);
-    newSet.insert(100500);
-    cout << newSet.getActualSize() << endl;
-    newSet.print();
+    if (argc == 2 && string(argv[1]) == "test")
+    {
+        Set<int> mySet;
+        cout << mySet.getSize() << endl;
+        mySet.insert(10);
+        mySet.insert(100500);
+        mySet.print();
+        cout << mySet.getSize() << endl;
+        Set<int> newSet(mySet);
+        mySet.~Set();
+        cout << mySet.getSize() << endl;
+        cout << newSet.getSize() << endl;
+        newSet.insert(30);
+        newSet.insert(100501);
+        newSet.insert(30);
+        newSet.insert(100501);
+        newSet.insert(30);
+        newSet.insert(100501);
+        newSet.insert(30);
+        newSet.insert(100501);
+        newSet.insert(30);
+        newSet.insert(100501);
+        newSet.print();
+        cout << newSet.getSize() << endl;
+        newSet.resize(100);
+        cout << newSet.getSize() << endl;
+        newSet.insert(10);
+        newSet.insert(100501);
+        newSet.insert(40);
+        newSet.insert(20501);
+        newSet.insert(40);
+        newSet.insert(200501);
+        newSet.insert(40);
+        newSet.insert(200501);
+        newSet.insert(30);
+        newSet.insert(200501);
+        newSet.print();
+        cout << newSet.getSize() << endl;
+        Set<int> crossSet(newSet);
+        crossSet.print();
+        newSet[10] = -1000;
+        newSet.print();
+        cout << newSet.getActualSize() << endl;
+        newSet[22] = 7;
+        cout << '!' << newSet[22] << endl;
+        newSet.insert(18);
+        newSet.insert(100500);
+        cout << newSet.getActualSize() << endl;
+        newSet.print();
 
-    crossSet[3] = 111;
-    crossSet.insert(44);
-    crossSet.print();
-    (crossSet * newSet).print();
-    Set<double> mulSet = crossSet * newSet;
-    mulSet.print();
+        crossSet[3] = 111;
+        crossSet.insert(44);
+        crossSet.print();
+        (crossSet * newSet).print();
+        Set<int> mulSet = crossSet * newSet;
+        mulSet.print();
 
-    Set<double> addSet(mulSet + crossSet);
-    addSet.print();
+        Set<int> addSet(mulSet + crossSet);
+        addSet.print();
 
-    (addSet - crossSet).print();
-    Set<double> subtracionSet = newSet - crossSet;
-    subtracionSet.print();
+        (addSet - crossSet).print();
+        Set<int> subtracionSet = newSet - crossSet;
+        subtracionSet.print();
 
-    Set<double> checkSet;
-    checkSet = newSet;
-    checkSet = checkSet;
-    checkSet.resize(200);
-    cout << checkSet.getSize() << endl;
-    checkSet.print();
-    checkSet.resize(4);
-    cout << checkSet.getSize() << endl;
-    checkSet.print();
+        Set<int> checkSet;
+        checkSet = newSet;
+        checkSet = checkSet;
+        checkSet.resize(200);
+        cout << checkSet.getSize() << endl;
+        checkSet.print();
+        checkSet.resize(4);
+        cout << checkSet.getSize() << endl;
+        checkSet.print();
 
-    Set<double> emptySet;
-    cout << emptySet.getActualSize() << endl;
-    cout << emptySet.getSize() << endl;
-    emptySet.insert(10);
-    emptySet.print();
-    emptySet.resize(0);
-    emptySet.~Set();
+        Set<int> emptySet;
+        cout << emptySet.getActualSize() << endl;
+        cout << emptySet.getSize() << endl;
+        emptySet.insert(10);
+        emptySet.print();
+        emptySet.resize(0);
+        emptySet.~Set();
+    }
 
+    getchar();
     return 0;
 }
