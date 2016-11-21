@@ -10,8 +10,6 @@
 #include <thread>
 #include <vector>
 
-#include <unistd.h>
-
 using namespace std;
 
 string get_random_string(int size)
@@ -133,7 +131,7 @@ int main()
         pool.push([index, filesizes, &mtxs]()
         {
             mtxs[index]->lock();
-            ofstream fout(to_string(filesizes[index]) + ".txt", ofstream::app);
+            ofstream fout(to_string(filesizes[index]), ofstream::app);
             fout << get_random_string(filesizes[index]);
             fout.close();
             mtxs[index]->unlock();
