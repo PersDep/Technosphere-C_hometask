@@ -1,12 +1,16 @@
 #include <condition_variable>
 #include <ctime>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <mutex>
+#include <queue>
 #include <random>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <unistd.h>
 
 using namespace std;
 
@@ -21,53 +25,71 @@ string get_random_string(int size)
     return str;
 }
 
-class thread_pool
+template<class T>
+class ThreadSafeQueue
 {
 private:
-    struct bool_thread
-    {
-        thread Thread;
-        bool in_use;
-    };
-
-    vector<bool_thread> threads;
-    thread check;
-
-    unsigned started;
-    vector<bool> ready;
-
-    condition_variable cv;
-    unique_lock<mutex> lock;
+    queue<T> q;
     mutex mtx;
 
 public:
-    thread_pool(int num_threads) : threads(vector<bool_thread>(num_threads)), started(0), ready(vector<bool>(num_threads, false))
+    void Push(T t) {
+        mtx.lock();
+        q.push(t);
+        mtx.unlock();
+    }
+
+    T Pop() {
+        mtx.lock();
+        T t = q.front();
+        q.pop();
+        mtx.unlock();
+        return t;
+    }
+
+    bool Empty() {
+        mtx.lock();
+        bool empty = q.empty();
+        mtx.unlock();
+        return empty;
+    }
+};
+
+class thread_pool
+{
+private:
+    struct Thread
+    {
+        thread Thread;
+        unique_lock<mutex> Lock;
+        mutex Mutex;
+    };
+    vector<Thread> threads;
+    ThreadSafeQueue<function<void()>> tasks;
+
+    condition_variable cv;
+
+public:
+    thread_pool(int num_threads) : threads(vector<Thread>(num_threads))
     {
         for (auto &i : threads)
-            i.in_use = false;
-        lock = unique_lock<mutex>(mtx);
-        check = thread([](condition_variable &cv, unique_lock<mutex> &lock, vector<bool> &ready)
+        {
+            i.Lock = unique_lock<mutex>(i.Mutex);
+            i.Thread = thread([this](condition_variable &cv, Thread &i)
                     {
                         while (true)
                         {
-                            cv.wait(lock);
-                            for (unsigned i = 0; i < ready.size(); i++)
-                            {
-                                if (!ready[i])
-                                {
-                                    ready[i] = true;
-                                    break;
-                                }
-                            }
+                            cv.wait(i.Lock);
+                            this->tasks.Pop()();
                         }
-                    }, ref(cv), ref(lock), ref(ready));
+                    }, ref(cv), ref(i));
+        }
     }
     ~thread_pool()
     {
         for (auto &i : threads)
             if (i.Thread.joinable())
                 i.Thread.join();
-        check.detach();
     }
     thread_pool(const thread_pool &pool) = delete;
     thread_pool& operator=(const thread_pool &pool) = delete;
@@ -75,56 +97,16 @@ public:
     template<typename type>
     void push(type handler)
     {
-        if (started < threads.size())
-        {
-            for (auto &i : threads)
-                if (!(i.Thread.joinable()))
-                {
-                    i.in_use = true;
-                    i.Thread = thread([handler = move(handler)](bool_thread &i, condition_variable &cv)
-                    {
-                        handler();
-                        i.in_use = false;
-                        cv.notify_one();
-                    }, ref(i), ref(cv));
-                    started++;
-                    break;
-                }
-        }
-        else
-        {
-            bool some_ready = false;
-            while (!some_ready)
-                for (unsigned i = 0; i < ready.size(); i++)
-                    if (ready[i])
-                    {
-                        ready[i] = false;
-                        some_ready = true;
-                        break;
-                    }
-            for (auto &i : threads)
-                if (!i.in_use)
-                {
-                    i.Thread.join();
-                    i.in_use = true;
-                    i.Thread = thread([handler = move(handler)](bool_thread &i, condition_variable &cv)
-                    {
-                        handler();
-                        i.in_use = false;
-                        cv.notify_one();
-                    }, ref(i), ref(cv));
-                    break;
-                }
-        }
+        tasks.Push(handler);
+        cv.notify_one();
     }
 };
 
 int main()
 {
-    thread_pool pool(3);
-
+    thread_pool pool(5);
     vector<int> filesizes(0);
-    vector<mutex *> mtxs;
+    vector<mutex *> mtxs(0);
 
     while (true)
     {
@@ -151,7 +133,7 @@ int main()
         pool.push([index, filesizes, &mtxs]()
         {
             mtxs[index]->lock();
-            ofstream fout(to_string(filesizes[index]), ofstream::app);
+            ofstream fout(to_string(filesizes[index]) + ".txt", ofstream::app);
             fout << get_random_string(filesizes[index]);
             fout.close();
             mtxs[index]->unlock();
@@ -161,5 +143,6 @@ int main()
     for (auto &i : mtxs)
         delete i;
 
+    exit(0);
     return 0;
 }
