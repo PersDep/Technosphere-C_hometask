@@ -24,70 +24,56 @@ string get_random_string(int size)
 }
 
 template<class T>
-class ThreadSafeQueue
+class Queue
 {
 private:
     queue<T> q;
-    mutex mtx;
 
 public:
-    void Push(T t) {
-        mtx.lock();
-        q.push(t);
-        mtx.unlock();
-    }
+    void Push(T t) { q.push(t); }
 
-    T Pop() {
-        mtx.lock();
+    T Pop()
+    {
         T t = q.front();
         q.pop();
-        mtx.unlock();
         return t;
-    }
-
-    bool Empty() {
-        mtx.lock();
-        bool empty = q.empty();
-        mtx.unlock();
-        return empty;
     }
 };
 
 class thread_pool
 {
 private:
-    struct Thread
-    {
-        thread Thread;
-        unique_lock<mutex> Lock;
-        mutex Mutex;
-    };
-    vector<Thread> threads;
-    ThreadSafeQueue<function<void()>> tasks;
+    vector<thread> threads;
+    Queue<function<void()>> tasks;
+    mutex mtx;
 
     condition_variable cv;
 
 public:
-    thread_pool(int num_threads) : threads(vector<Thread>(num_threads))
+    thread_pool(int num_threads) : threads(vector<thread>(num_threads))
     {
         for (auto &i : threads)
         {
-            i.Lock = unique_lock<mutex>(i.Mutex);
-            i.Thread = thread([this](condition_variable &cv, Thread &i)
+            i = thread([this](condition_variable &cv)
                     {
                         while (true)
                         {
-                            cv.wait(i.Lock);
-                            this->tasks.Pop()();
+                            function<void()> task;
+                            {
+                                unique_lock<mutex> lock(mtx);
+                                cv.wait(lock);
+                                task = tasks.Pop();
+                            }
+                            task();
                         }
-                    }, ref(cv), ref(i));
+                    }, ref(cv));
         }
     }
     ~thread_pool()
     {
         for (auto &i : threads)
-            if (i.Thread.joinable())
-                i.Thread.join();
+            if (i.joinable())
+                i.join();
     }
     thread_pool(const thread_pool &pool) = delete;
     thread_pool& operator=(const thread_pool &pool) = delete;
@@ -95,6 +81,7 @@ public:
     template<typename type>
     void push(type handler)
     {
+        unique_lock<mutex> lock(mtx);
         tasks.Push(handler);
         cv.notify_one();
     }
