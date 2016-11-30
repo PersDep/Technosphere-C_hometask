@@ -30,11 +30,11 @@ private:
     queue<T> q;
 
 public:
-    void Push(T t) { q.push(t); }
+    void Push(T &&t) { q.push(forward<T>(t)); }
 
     T Pop()
     {
-        T t = q.front();
+        T t = move(q.front());
         q.pop();
         return t;
     }
